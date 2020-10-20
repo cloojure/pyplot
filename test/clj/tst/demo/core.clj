@@ -20,6 +20,7 @@
     :library-path "/usr/lib/python3.8/config-3.8-x86_64-linux-gnu/libpython3.8.so"))
 
 (require-python '[numpy :as np])
+(require-python '[operator :as oper])
 
 ;---------------------------------------------------------------------------------------------------
 (dotest
@@ -44,6 +45,7 @@
 
   (nl)
   (spyx-pretty (py/run-simple-string "(2 + 3)"))
+  (spyx (oper/add 2 3))
 
   )
 
@@ -57,8 +59,9 @@
 (defn display-image
   "Display image on OSX or on Linux based system"
   [image-file]
+  (newline)
   (println "display-image - enter")
-  (sh/sh system-display-cmd image-file)
+  (sh/sh system-display-cmd "-resize"  "3200x1000!" image-file)
   (println "display-image - leave"))
 
 (defn create-tmp-file
@@ -82,7 +85,8 @@
   "Takes forms with mathplotlib.pyplot to then show locally"
   [& body]
   `(let [_# (pyplot/clf)
-         fig# (pyplot/figure)
+         fig# (pyplot/figure ; [16.0 9.0]
+                )
          agg-canvas# (matplotlib.backends.backend_agg/FigureCanvasAgg fig#)
          temp-file# (create-tmp-file "tmp-image" ".png")
          temp-image# (.getAbsolutePath temp-file#)]
@@ -90,8 +94,7 @@
      (py. agg-canvas# "draw")
      (pyplot/savefig temp-image#)
      (.deleteOnExit temp-file#)
-     ; avoid blocking thread - O.S. call from display-image blocks until user closes graphics window
-     (future
+     (future ; avoid blocking the thread - O.S. call from display-image blocks until user closes graphics window
        (display-image temp-image#))))
 
 (dotest
